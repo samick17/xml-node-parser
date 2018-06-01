@@ -1,9 +1,16 @@
 {
   "name": "xml-node-parser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parse xml as node objects",
   "description": "",
   "main": "index.js",
+  "keywords": [
+  	"xml"
+  ],
+  "repository": {
+  	"type": "git",
+  	"url": "https://github.com/samick17/xml-node-parser"
+  },
   "author": "Samick <boneache@gmail.com>",
   "license": "MIT"
 }
