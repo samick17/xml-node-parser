@@ -1,0 +1,9 @@
+{
+  "name": "xml-parser",
+  "version": "1.0.0",
+  "description": "Parse xml as node objects",
+  "description": "",
+  "main": "index.js",
+  "author": "Samick <boneache@gmail.com>",
+  "license": "MIT"
+}
