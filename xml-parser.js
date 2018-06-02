@@ -19,7 +19,15 @@
         this.name = name;
     };
     XmlNode.prototype.setValue = function(value) {
-        this.value = value;
+        var typeofValue = typeof value;
+        switch(typeofValue) {
+            case 'string':
+            this.value = value.trim();
+            break;
+            default:
+            this.value = '';
+            break;
+        }
     };
     XmlNode.prototype.attributeToString = function() {
         var arr = [];
@@ -37,7 +45,9 @@
     XmlNode.prototype.toString = function(prefix) {
         var text = '';
         prefix = prefix || '';
-        text += `${prefix}${this.name}(${this.attributeToString()}): ${this.value}\n`;
+        var attrText = this.attributeToString();
+        attrText = attrText ? `(${attrText})` : '';
+        text += `${prefix}${this.name}${attrText}: ${this.value}\n`;
         prefix += '  ';
         this.forEach((child) => {
             text += child.toString(prefix);
@@ -141,6 +151,8 @@
             if(this.symbol === '<' && this.chunkKey !== 'attrValue') {
                 this.symbol += ch;
                 this.isInline = this.chunk !== '</';
+            } else {
+                this.appendChunk(ch);
             }
             break;
             case '>':
@@ -239,7 +251,7 @@
         parseFromText: function(xmlText) {
             var parser = createParser();
             parser.write(xmlText);
-            return  parser.getNodes();
+            return parser.getNodes();
         },
         parseFromFile: function(filePath) {
             return new Promise((resolve, reject) => {
@@ -250,7 +262,7 @@
                         rs.on('data', (data) => {
                             parser.write(data.toString());
                         });
-                        rs.on('end', () => {
+                        rs.on('end', (data) => {
                             resolve(parser.getNodes());
                         });
                     } else {
