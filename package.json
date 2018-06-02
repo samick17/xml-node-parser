@@ -1,7 +1,7 @@
 {
   "name": "xml-node-parser",
   "version": "1.0.2",
-  "description": "",
+  "description": "Unlike marshal/unmarshal xml parser, parse xml file as XmlNode objects.",
   "main": "index.js",
   "scripts": {
     "test": "nyc mocha"
