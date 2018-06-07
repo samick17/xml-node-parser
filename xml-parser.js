@@ -1,6 +1,7 @@
 (function() {
 
     const fs = require('fs');
+    const XmlUtility = require('./xml-utility');
     /**/
     function XmlNode() {
         this.name = '';
@@ -18,6 +19,12 @@
     XmlNode.prototype.setName = function(name) {
         this.name = name;
     };
+    XmlNode.prototype.setAttributes = function(attrs) {
+        for(var key in attrs) {
+            var value = attrs[key];
+            this.addAttribute(key, value);
+        }
+    };
     XmlNode.prototype.setValue = function(value) {
         var typeofValue = typeof value;
         switch(typeofValue) {
@@ -33,7 +40,11 @@
         var arr = [];
         for(var key in this.attrs) {
             var val = this.attrs[key];
-            arr.push(`${key}="${val}"`);
+            if(val) {
+                arr.push(`${key}="${val}"`);
+            } else {
+                arr.push(`${key}`);
+            }
         }
         return arr.join(' ');
     };
@@ -117,6 +128,9 @@
         this.chunks = {};
         this.chunkKey = 'default';
         this.chunk = '';
+        this.isStartTag = true;
+        this.isStartValue = false;
+        this.isEndTag = false;
         this.node = new XmlNode();
     }
     XmlNodeHandler.prototype.appendChunk = function(ch) {
@@ -138,99 +152,42 @@
         this.value = value;
     };
     XmlNodeHandler.prototype.handle = function(ch) {
-        this.chunk += ch;
         switch(ch) {
-            case '<':
-            this.chunk = '<';
-            if(this.symbol === '') {
-                this.symbol += ch;
-                this.chunkKey = 'name';
-            }
-            break;
-            case '/':
-            if(this.symbol === '<' && this.chunkKey !== 'attrValue') {
-                this.symbol += ch;
-                this.isInline = this.chunk !== '</';
-            } else {
-                this.appendChunk(ch);
-            }
-            break;
             case '>':
-            var result = this.symbol + ch;
-            switch(result) {
-                case '<>':
-                this.chunkKey = 'value';
-                var pivot = this.parser.getPivot();
-                pivot.setValue(this.chunks.default || this.value);
-                this.chunks.name = '';
-                this.symbol = '';
+            this.chunk += ch;
+            var pivot = this.parser.getPivot();
+            if(XmlUtility.isInlineTag(this.chunk)) {
+                var inlineTag = XmlUtility.parseInlineTag(this.chunk);
+                var node = new XmlNode();
+                node.setName(inlineTag.name);
+                node.setValue(inlineTag.value);
+                node.setAttributes(inlineTag.attrs);
+                pivot.setValue(inlineTag.previousValue);
+                pivot.node.appendChild(node);
+                this.chunk = '';
+            } else if(pivot && pivot.name && XmlUtility.isEndWithTag(pivot.name, this.chunk)) {
+                var endTag = XmlUtility.parseValueEndTag(this.chunk);
+                pivot.node.setValue(endTag.value || this.value);
+                this.parser.setPivot(pivot.parent);
+                pivot.parent.node.appendChild(pivot.node);
+                this.chunk = '';
+            } else if(XmlUtility.isStartTag(this.chunk)) {
+                var startTag = XmlUtility.parseStartTag(this.chunk);
+                var value = startTag.previousValue;
+                pivot.setValue(value);
                 var childHandler = pivot.appendChild();
                 this.parser.setPivot(childHandler);
-                break;
-                case '</>':
-                var pivot = this.parser.getPivot();
-                pivot.setName(this.chunks.name || this.name);
-                pivot.setValue(this.chunks.default || this.value);
-                this.chunks.name = '';
-                this.symbol = '';
-                if(this.isInline) {
-                    var inlineHandler = pivot.appendChild();
-                    inlineHandler.node.setName(this.name);
-                    inlineHandler.node.setValue(this.value);
-                    pivot.node.appendChild(inlineHandler.node);
-                    for(var key in pivot.attrs) {
-                        var value = pivot.attrs[key];
-                        inlineHandler.node.addAttribute(key, value);
-                    }
-                    pivot.attrs = {};
-                } else {
-                    pivot.node.setName(this.name);
-                    pivot.node.setValue(this.value);
-                    this.parser.setPivot(pivot.parent);
-                    pivot.parent.node.appendChild(pivot.node);
-                    for(var key in pivot.parent.attrs) {
-                        var value = pivot.parent.attrs[key];
-                        pivot.node.addAttribute(key, value);
-                    }
-                    pivot.parent.attrs = {};
-                }
-                break;
+                childHandler.node.setName(startTag.name);
+                childHandler.node.setAttributes(startTag.attrs);
+                childHandler.setName(startTag.name);
+                this.chunk = '';
             }
             break;
-            case ' ':
-            if(this.symbol === '<') {
-                this.chunkKey = 'attr';
-            } else {
-                this.appendChunk(ch);
-            }
-            break;
-            case '=':
-            if(this.symbol === '<') {
-            } else {
-                this.appendChunk(ch);
-            }
-            break;
-            case '"':
-            this.symbolQuote += ch;
-            if(this.symbol === '<') {
-                if(this.symbolQuote === '"') {
-                    this.chunkKey = 'attrValue';
-                } else if(this.symbolQuote === '""') {
-                    var attrKey = this.chunks.attr;
-                    var attrValue = this.chunks.attrValue;
-                    this.chunks.attr = '';
-                    this.chunks.attrValue = '';
-                    this.symbolQuote = '';
-                    this.attrs[attrKey] = attrValue;
-                } else {
-                    this.appendChunk(ch);
-                }
-            } else {
-                this.appendChunk(ch);
-            }
+            case '\r':
+            case '\n':
             break;
             default:
-            this.appendChunk(ch);
+            this.chunk += ch;
             break;
         }
     };

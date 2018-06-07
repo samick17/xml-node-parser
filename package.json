@@ -1,6 +1,6 @@
 {
   "name": "xml-node-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Unlike marshal/unmarshal xml parser, parse xml file as XmlNode objects.",
   "main": "index.js",
   "scripts": {
