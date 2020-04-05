@@ -110,7 +110,6 @@ describe('xml-parser', () => {
 			assert.equal(0, n6.children.length);
 
 			var n7 = nodes[0].children[6];
-			console.log(n7);
 			assert.equal(['<td class="download-table-last">',
 				'<a href="https://nodejs.org/download/release/v10.3.0/">',
 				'Downloads',

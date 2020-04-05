@@ -1,6 +1,6 @@
 {
   "name": "xml-node-parser",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Unlike marshal/unmarshal xml parser, parse xml file as XmlNode objects.",
   "main": "index.js",
   "scripts": {
@@ -16,8 +16,8 @@
   "author": "Samick <boneache@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "chai": "^4.1.2",
-    "mocha": "^5.2.0",
-    "nyc": "^12.0.1"
+    "chai": "^4.2.0",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.1"
   }
 }
